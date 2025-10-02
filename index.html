@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Insurance Premium Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .form-group label.required::after {
+            content: " *";
+            color: var(--danger-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+
+        .form-group input.error,
+        .form-group select.error {
+            border-color: var(--danger-color);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .info-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: var(--primary-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-group:hover {
+            background: #f1f5f9;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            margin: 0;
+            user-select: none;
+        }
+
+        .addons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .premium-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .premium-column {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .premium-column h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .premium-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .premium-item.total {
+            font-weight: 600;
+            font-size: 1rem;
+            padding-top: 12px;
+            border-top: 2px solid var(--border-color);
+            margin-top: 8px;
+        }
+
+        .total-payable {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .total-payable h2 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            opacity: 0.95;
+        }
+
+        .total-payable .amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .message-box {
+            margin-top: 20px;
+        }
+
+        .message-box textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning-color);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #92400e;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .premium-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .total-payable .amount {
+                font-size: 2rem;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Motor Insurance Premium Calculator</h1>
+            <p>Calculate your comprehensive vehicle insurance premium instantly</p>
+        </div>
+
+        <!-- Basic Details -->
+        <div class="card">
+            <h2 class="card-title">Basic Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="proposerName" class="required">Proposer Name</label>
+                    <input type="text" id="proposerName" placeholder="Enter full name">
+                    <span class="error-message" id="proposerName-error">Name is required</span>
+                </div>
+                <div class="form-group">
+                    <label for="registrationNo" class="required">Registration Number</label>
+                    <input type="text" id="registrationNo" placeholder="e.g., GJ01AB1234">
+                    <span class="error-message" id="registrationNo-error">Registration number is required</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date and Zone -->
+        <div class="card">
+            <h2 class="card-title">Registration & Coverage Details</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="registrationDate" class="required">Registration Date</label>
+                    <input type="date" id="registrationDate" max="2025-10-02">
+                    <span class="error-message" id="registrationDate-error">Registration date is required</span>
+                </div>
+                <div class="form-group">
+                    <label for="riskStartDate" class="required">Risk Start Date</label>
+                    <input type="date" id="riskStartDate">
+                    <span class="error-message" id="riskStartDate-error">Risk start date is required</span>
+                </div>
+                <div class="form-group">
+                    <label for="zone" class="required">Zone</label>
+                    <select id="zone">
+                        <option value="zoneb">Zone B</option>
+                        <option value="zonea">Zone A</option>
+                        <option value="zonec">Zone C</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Details -->
+        <div class="card">
+            <h2 class="card-title">Vehicle Specifications</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="vehicleType" class="required">Vehicle Type</label>
+                    <select id="vehicleType">
+                        <option value="GCV4">GCV Other Than 3-Wheeler</option>
+                        <option value="MISC">Miscellaneous & Spec.</option>
+                        <option value="PvtCar">Private Car</option>
+                        <option value="PvtCarS">Private Car Standalone</option>
+                        <option value="2W">Two Wheeler</option>
+                        <option value="2WSS">Two Wheeler Standalone</option>
+                        <option value="PCV Taxi">PCV Not Exceeding 6 Pass.</option>
+                        <option value="PCV Bus">PCV Bus</option>
+                        <option value="PCV School Bus">PCV School Bus</option>
+                        <option value="3GCV">3-Wheeler GCV</option>
+                        <option value="3PCV">3-Wheeler PCV Not Exceeding 6 Pass.</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="engineType">Engine Type</label>
+                    <select id="engineType" disabled>
+                        <option value="ICE">I.C.E.</option>
+                        <option value="Electric">Electric</option>
+                        <option value="Hybrid">Hybrid</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="gvw">GVW (kg)</label>
+                    <input type="number" id="gvw" min="0" placeholder="Gross Vehicle Weight">
+                    <span class="error-message" id="gvw-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="cc">CC/KW</label>
+                    <input type="number" id="cc" min="0" disabled placeholder="Cubic Capacity">
+                    <span class="error-message" id="cc-error"></span>
+                </div>
+                <div class="form-group">
+                    <label for="passengers">No. of Passengers</label>
+                    <input type="number" id="passengers" min="0" disabled placeholder="Seating capacity">
+                </div>
+                <div class="form-group">
+                    <label for="llDrivers">LL to Paid Driver/Cleaner/Conductor</label>
+                    <input type="number" id="llDrivers" min="0" placeholder="Number">
+                </div>
+            </div>
+            <div id="odRateDisplay" class="info-badge hidden" style="margin-top: 16px;">
+                Basic OD Rate: <span id="odRate">-</span>%
+            </div>
+        </div>
+
+        <!-- IDV Details -->
+        <div class="card">
+            <h2 class="card-title">IDV Calculation</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="oldIdv" class="required">Ex-Showroom/Old IDV</label>
+                    <input type="number" id="oldIdv" min="0" placeholder="Enter amount">
+                    <span class="error-message" id="oldIdv-error">IDV is required</span>
+                </div>
+                <div class="form-group">
+                    <label for="depreciation">Depreciation %</label>
+                    <input type="number" id="depreciation" min="0" max="100" placeholder="e.g., 5">
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="margin: 0;">New IDV:</label>
+                        <span id="newIdv" class="info-badge" style="font-size: 1.1rem;">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discounts & Benefits -->
+        <div class="card">
+            <h2 class="card-title">Discounts & Benefits</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="discount">OD Discount %</label>
+                    <input type="number" id="discount" min="0" max="100" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="ncb">NCB %</label>
+                    <select id="ncb">
+                        <option value="0">0%</option>
+                        <option value="20">20%</option>
+                        <option value="25">25%</option>
+                        <option value="35">35%</option>
+                        <option value="45">45%</option>
+                        <option value="50">50%</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="imt23">
+                        <label for="imt23">IMT-23 (Parts Exclusion)</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="paOwnerDriver">
+                        <label for="paOwnerDriver">PA Owner-Driver</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="paTenure">PA Tenure (Years)</label>
+                    <select id="paTenure" disabled>
+                        <option value="1">1</option>
+                        <option value="3">3</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add-ons -->
+        <div class="card">
+            <h2 class="card-title">Add-on Covers</h2>
+            <div class="addons-grid">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="nilDep" disabled>
+                    <label for="nilDep">Nil Depreciation</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="engineProtect" disabled>
+                    <label for="engineProtect">Engine Protect</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="consumables" disabled>
+                    <label for="consumables">Consumables</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rti" disabled>
+                    <label for="rti">Return to Invoice</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="lossOfKey" disabled>
+                    <label for="lossOfKey">Loss of Key</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ncbProtect" disabled>
+                    <label for="ncbProtect">NCB Protect</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rsa" disabled>
+                    <label for="rsa">Road Side Assist</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="lpgCng">
+                    <label for="lpgCng">LPG/CNG Kit</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="geoExtension">
+                    <label for="geoExtension">Geographical Extension</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="overturning" disabled>
+                    <label for="overturning">Overturning</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="evProtect" disabled>
+                    <label for="evProtect">EV Protect</label>
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="emiProtect">EMI Protect (Loan Amount)</label>
+                    <input type="number" id="emiProtect" min="0" placeholder="Enter loan amount">
+                </div>
+                <div class="form-group">
+                    <label for="tyreRim">Tyre & Rim Protect</label>
+                    <select id="tyreRim" disabled>
+                        <option value="0">None</option>
+                        <option value="25000">25,000</option>
+                        <option value="50000">50,000</option>
+                        <option value="100000">1,00,000</option>
+                        <option value="200000">2,00,000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="addTowing">Additional Towing (Max 20,000)</label>
+                    <input type="number" id="addTowing" min="0" max="20000" placeholder="Amount">
+                </div>
+                <div class="form-group">
+                    <label for="trailerOd">Trailer OD Amount</label>
+                    <input type="number" id="trailerOd" min="0" placeholder="Amount">
+                </div>
+                <div class="form-group">
+                    <label for="electricalAcc">Electrical Accessories</label>
+                    <input type="number" id="electricalAcc" min="0" placeholder="Amount">
+                </div>
+            </div>
+
+            <div class="form-grid" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label for="paidDriverCount">PA to Paid Driver/Cleaner/Conductor</label>
+                    <input type="number" id="paidDriverCount" min="0" placeholder="Count">
+                </div>
+                <div class="form-group">
+                    <label for="paidDriverSI">Sum Insured</label>
+                    <select id="paidDriverSI">
+                        <option value="0">None</option>
+                        <option value="100000">1,00,000</option>
+                        <option value="200000">2,00,000</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="passengerCount">PA to Unnamed Passengers</label>
+                    <input type="number" id="passengerCount" min="0" disabled placeholder="Count">
+                </div>
+                <div class="form-group">
+                    <label for="passengerSI">Sum Insured</label>
+                    <select id="passengerSI" disabled>
+                        <option value="0">None</option>
+                        <option value="100000">1,00,000</option>
+                        <option value="200000">2,00,000</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Summary -->
+        <div class="card hidden" id="premiumSummary">
+            <h2 class="card-title">Premium Breakdown</h2>
+            <div class="premium-summary">
+                <div class="premium-column">
+                    <h3>Own Damage</h3>
+                    <div id="odBreakdown"></div>
+                </div>
+                <div class="premium-column">
+                    <h3>Liability</h3>
+                    <div id="liabilityBreakdown"></div>
+                </div>
+            </div>
+
+            <div class="total-payable">
+                <h2>Total Premium Payable</h2>
+                <div class="amount">Rs. <span id="totalAmount">0</span>/-</div>
+            </div>
+        </div>
+
+        <!-- Additional Message -->
+        <div class="card">
+            <h2 class="card-title">Additional Information</h2>
+            <div class="message-box">
+                <textarea id="additionalMessage" placeholder="Contact person, bank account details, or any other message..."></textarea>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button class="btn btn-primary" id="calculateBtn">Calculate Premium</button>
+            <button class="btn btn-success" id="exportPdfBtn" disabled>Export as PDF</button>
+            <button class="btn btn-success" id="exportProposalBtn" disabled>Export Proposal Form</button>
+        </div>
+
+        <div class="note">
+            <strong>Important Note:</strong>
+            For New Private Car & Two Wheeler: Please enter Registration Date and Risk Start Date as the current date.
+            All calculations are based on current IRDAI guidelines and may vary based on insurer policies.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        // Configuration object for easy rate updates
+        const CONFIG = {
+            rates: {
+                gcv: {
+                    zoneb: { lt5: 1.743, gte5lt7: 1.787, gte7: 1.830 },
+                    zonec: { lt5: 1.726, gte5lt7: 1.770, gte7: 1.812 },
+                    zonea: { lt5: 1.751, gte5lt7: 1.795, gte7: 1.839 }
+                },
+                pvtCar: {
+                    ice: {
+                        zoneb: {
+                            lt5: { lte1000: 3.039, gt1000lte1500: 3.191, gt1500: 3.343 },
+                            gte5lt10: { lte1000: 3.191, gt1000lte1500: 3.351, gt1500: 3.510 },
+                            gte10: { lte1000: 3.267, gt1000lte1500: 3.430, gt1500: 3.594 }
+                        },
+                        zonec: {
+                            lt5: { lte1000: 3.039, gt1000lte1500: 3.191, gt1500: 3.343 },
+                            gte5lt10: { lte1000: 3.191, gt1000lte1500: 3.351, gt1500: 3.510 },
+                            gte10: { lte1000: 3.267, gt1000lte1500: 3.430, gt1500: 3.594 }
+                        },
+                        zonea: {
+                            lt5: { lte1000: 3.127, gt1000lte1500: 3.283, gt1500: 3.440 },
+                            gte5lt10: { lte1000: 3.283, gt1000lte1500: 3.447, gt1500: 3.612 },
+                            gte10: { lte1000: 3.362, gt1000lte1500: 3.529, gt1500: 3.698 }
+                        }
+                    },
+                    electric: {
+                        zoneb: { lt5: 3.191, gte5lt10: 3.351, gte10: 3.430 },
+                        zonec: { lt5: 3.191, gte5lt10: 3.351, gte10: 3.430 },
+                        zonea: { lt5: 3.283, gte5lt10: 3.447, gte10: 3.529 }
+                    }
+                },
+                twoWheeler: {
+                    ice: {
+                        zoneb: {
+                            lt5: { lte150: 1.676, gt150lte350: 1.760, gt350: 1.844 },
+                            gte5lt10: { lte150: 1.760, gt150lte350: 1.848, gt350: 1.936 },
+                            gte10: { lte150: 1.802, gt150lte350: 1.892, gt350: 1.982 }
+                        },
+                        zonec: {
+                            lt5: { lte150: 1.676, gt150lte350: 1.760, gt350: 1.844 },
+                            gte5lt10: { lte150: 1.760, gt150lte350: 1.848, gt350: 1.936 },
+                            gte10: { lte150: 1.802, gt150lte350: 1.892, gt350: 1.982 }
+                        },
+                        zonea: {
+                            lt5: { lte150: 1.708, gt150lte350: 1.793, gt350: 1.879 },
+                            gte5lt10: { lte150: 1.793, gt150lte350: 1.883, gt350: 1.973 },
+                            gte10: { lte150: 1.836, gt150lte350: 1.928, gt350: 2.020 }
+                        }
+                    },
+                    electric: {
+                        zoneb: { lt5: 1.760, gte5lt10: 1.848, gte10: 1.892 },
+                        zonec: { lt5: 1.760, gte5lt10: 1.848, gte10: 1.892 },
+                        zonea: { lt5: 1.793, gte5lt10: 1.883, gte10: 1.928 }
+                    }
+                },
+                taxi: {
+                    zoneb: {
+                        lt5: { lte1000: 3.191, gt1000lte1500: 3.351, gt1500: 3.510 },
+                        gte5lt7: { lte1000: 3.271, gt1000lte1500: 3.435, gt1500: 3.598 },
+                        gte7: { lte1000: 3.351, gt1000lte1500: 3.519, gt1500: 3.686 }
+                    },
+                    zonec: {
+                        lt5: { lte1000: 3.191, gt1000lte1500: 3.351, gt1500: 3.510 },
+                        gte5lt7: { lte1000: 3.271, gt1000lte1500: 3.435, gt1500: 3.598 },
+                        gte7: { lte1000: 3.351, gt1000lte1500: 3.519, gt1500: 3.686 }
+                    },
+                    zonea: {
+                        lt5: { lte1000: 3.284, gt1000lte1500: 3.448, gt1500: 3.612 },
+                        gte5lt7: { lte1000: 3.366, gt1000lte1500: 3.534, gt1500: 3.703 },
+                        gte7: { lte1000: 3.448, gt1000lte1500: 3.620, gt1500: 3.793 }
+                    }
+                },
+                pcvBus: {
+                    zoneb: { lt5: 1.672, gte5lt7: 1.714, gte7: 1.756 },
+                    zonec: { lt5: 1.656, gte5lt7: 1.697, gte7: 1.739 },
+                    zonea: { lt5: 1.680, gte5lt7: 1.722, gte7: 1.764 }
+                },
+                misc: {
+                    zoneb: { lt5: 1.202, gte5lt7: 1.232, gte7: 1.262 },
+                    zonec: { lt5: 1.190, gte5lt7: 1.220, gte7: 1.250 },
+                    zonea: { lt5: 1.208, gte5lt7: 1.238, gte7: 1.268 }
+                },
+                threeGcv: {
+                    zoneb: { lt5: 1.656, gte5lt7: 1.697, gte7: 1.739 },
+                    zonec: { lt5: 1.640, gte5lt7: 1.681, gte7: 1.722 },
+                    zonea: { lt5: 1.664, gte5lt7: 1.706, gte7: 1.747 }
+                },
+                threePcv: {
+                    zoneb: { lt5: 1.272, gte5lt7: 1.304, gte7: 1.336 },
+                    zonec: { lt5: 1.260, gte5lt7: 1.292, gte7: 1.323 },
+                    zonea: { lt5: 1.278, gte5lt7: 1.310, gte7: 1.342 }
+                }
+            },
+            tp: {
+                gcv: {
+                    lte7500: 16049,
+                    gt7500lte12000: 27186,
+                    gt12000lte20000: 35313,
+                    gt20000lte40000: 43950,
+                    gt40000: 44242
+                },
+                threeGcv: { ice: 4492, electric: 3139 },
+                threePcv: { 
+                    ice: { basic: 2371, perPassenger: 1134 },
+                    electric: { basic: 1539, perPassenger: 737 }
+                },
+                pcvBus: { basic: 14343, perPassenger: 877 },
+                pcvSchoolBus: { basic: 12192, perPassenger: 745 },
+                misc: 7267,
+                taxi: {
+                    lte1000: { basic: 6040, perPassenger: 1162 },
+                    gt1000lte1500: { basic: 7940, perPassenger: 978 },
+                    gt1500: { basic: 10523, perPassenger: 1117 }
+                },
+                pvtCar: {
+                    ice: {
+                        new: { lte1000: 6521, gt1000lte1500: 10640, gt1500: 24596 },
+                        renewal: { lte1000: 2094, gt1000lte1500: 3416, gt1500: 7897 }
+                    },
+                    electric: {
+                        new: { lte30: 5543, gt30lte65: 9044, gt65: 20907 },
+                        renewal: { lte30: 1780, gt30lte65: 2904, gt65: 6713 }
+                    },
+                    hybrid: {
+                        new: { lte1000: 6032, gt1000lte1500: 9842, gt1500: 22751 },
+                        renewal: { lte1000: 1937, gt1000lte1500: 3160, gt1500: 7305 }
+                    }
+                },
+                twoWheeler: {
+                    ice: {
+                        new: { lte75: 2901, gt75lte150: 3851, gt150lte350: 7365, gt350: 15117 },
+                        renewal: { lte75: 538, gt75lte150: 714, gt150lte350: 1366, gt350: 2804 }
+                    },
+                    electric: {
+                        new: { lte3: 2466, gt3lte7: 3273, gt7lte16: 6260, gt16: 12849 },
+                        renewal: { lte3: 457, gt3lte7: 607, gt7lte16: 1161, gt16: 2383 }
+                    }
+                },
+                trailer: 2485,
+                lpgCng: 60,
+                geoExtension: 100
+            },
+            addons: {
+                nilDep: {
+                    commercial: { lte0_5: 0.10, gt0_5lte1_5: 0.20, gt1_5lte2_5: 0.30, gt2_5lte4_5: 0.40 },
+                    private: { lte0_5: 0.10, gt0_5lte1_5: 0.20, gt1_5lte4_5: 0.30, gt4_5lte6_5: 0.40 }
+                },
+                engineProtect: {
+                    pvtCar: { lt0_5: 0.0013, gte0_5lt1_5: 0.0016, gte1_5lt2_5: 0.0021, gte2_5lt3_5: 0.0027, gte3_5lt4_5: 0.0032 },
+                    twoWheeler: { lt0_5: 0.0007, gte0_5lt1_5: 0.0009, gte1_5lt2_5: 0.0012, gte2_5lt3_5: 0.0017, gte3_5lt4_5: 0.0022 },
+                    commercial: { lt0_5: 0.0015, gte0_5lt1_5: 0.0020, gte1_5lt2_5: 0.0026 }
+                },
+                consumables: {
+                    private: { lt0_5: 0.0010, gte0_5lt1_5: 0.0012, gte1_5lt2_5: 0.0015, gte2_5lt3_5: 0.0017, gte3_5lt4_5: 0.0020 },
+                    commercial: { lt0_5: 0.0015, gte0_5lt1_5: 0.0018, gte1_5lt2_5: 0.0022, gte2_5lt3_5: 0.0025, gte3_5lt4_5: 0.0030 }
+                },
+                rti: {
+                    pvtCarTwoWheelerGcvTaxi: { lt0_5: 0.0015, gte0_5lt1_5: 0.0020, gte1_5lt2_5: 0.0025 },
+                    misc: { lt0_5: 0.0010, gte0_5lt1_5: 0.0015, gte1_5lt2_5: 0.0020 },
+                    bus: { lt0_5: 0.0020, gte0_5lt1_5: 0.0025, gte1_5lt2_5: 0.0030 }
+                },
+                lossOfKey: { twoWheeler: 50, others: 750 },
+                emiProtect: { twoWheeler: 0.02, pvtCarTaxi: 0.066, others: 0.03 },
+                rsa: { twoWheeler: 25, pvtCar: 50, taxi: 75, gcv: 200 },
+                tyreRim: { 25000: 1000, 50000: 2000, 100000: 4000, 200000: 8000 },
+                ncbProtect: { pvtCar: 0.0015, others: 0.0024 },
+                geoExtension: 400,
+                lpgCngOd: 0.05,
+                overturning: 0.005,
+                towing: { lte10000: 0.05, gt10000: 0.075 },
+                trailerOd: 0.0105,
+                electricalAcc: 0.04,
+                evProtect: {
+                    electric: { lt0_5: 0.0025, gte0_5lt1_5: 0.0030, gte1_5lt2_5: 0.0035, gte2_5lt3_5: 0.004, gte3_5: 0.005 },
+                    hybrid: { lt0_5: 0.0015, gte0_5lt1_5: 0.0020, gte1_5lt2_5: 0.0025, gte2_5lt3_5: 0.003, gte3_5: 0.0035 }
+                },
+                paTenure: { 1: 275, 3: 705, 5: 1100 },
+                llDriver: { pvtCarNew: 150, pvtCarRenewal: 50, twoWheelerNew: 350, twoWheelerRenewal: 70 },
+                paPaidDriver: { 100000: 60, 200000: 120 },
+                paPassenger: { 100000: 50, 200000: 100 }
+            },
+            gst: { od: 0.18, tp: 0.18, tpBasic: 0.05 }
+        };
+
+        // State management
+        const state = {
+            vehicleAge: 0,
+            isNewVehicle: false,
+            odRate: 0,
+            basicOd: 0,
+            totalOd: 0,
+            totalTp: 0,
+            odBreakdown: {},
+            liabilityBreakdown: {}
+        };
+
+        // Utility functions
+        const $ = (id) => document.getElementById(id);
+        
+        const calculateAge = (regDate, riskDate) => {
+            const days = (new Date(riskDate) - new Date(regDate)) / (1000 * 60 * 60 * 24);
+            return days < 1460 ? days / 365 : (days + 1) / 365.25;
+        };
+
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('en-IN').format(Math.round(amount));
+        };
+
+        const showError = (fieldId, message) => {
+            const field = $(fieldId);
+            const errorEl = $(`${fieldId}-error`);
+            if (field && errorEl) {
+                field.classList.add('error');
+                errorEl.textContent = message;
+                errorEl.classList.add('show');
+            }
+        };
+
+        const clearError = (fieldId) => {
+            const field = $(fieldId);
+            const errorEl = $(`${fieldId}-error`);
+            if (field && errorEl) {
+                field.classList.remove('error');
+                errorEl.classList.remove('show');
+            }
+        };
+
+        const clearAllErrors = () => {
+            document.querySelectorAll('.error-message.show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+        };
+
+        // Validation
+        const validateForm = () => {
+            clearAllErrors();
+            let isValid = true;
+
+            const required = {
+                proposerName: 'Proposer name is required',
+                registrationNo: 'Registration number is required',
+                registrationDate: 'Registration date is required',
+                riskStartDate: 'Risk start date is required',
+                oldIdv: 'IDV is required'
+            };
+
+            for (const [field, message] of Object.entries(required)) {
+                if (!$(field).value) {
+                    showError(field, message);
+                    isValid = false;
+                }
+            }
+
+            // Vehicle-specific validation
+            const vType = $('vehicleType').value;
+            if (vType === 'GCV4' && !$('gvw').value) {
+                showError('gvw', 'GVW is required for GCV vehicles');
+                isValid = false;
+            }
+
+            if ((vType === 'PvtCar' || vType === 'PvtCarS' || vType === '2W' || vType === '2WSS' || vType === 'PCV Taxi') && !$('cc').value) {
+                showError('cc', 'CC/KW is required for this vehicle type');
+                isValid = false;
+            }
+
+            if ((vType === 'PCV Bus' || vType === 'PCV School Bus' || vType === 'PCV Taxi' || vType === '3PCV') && !$('passengers').value) {
+                showError('passengers', 'Number of passengers is required');
+                isValid = false;
+            }
+
+            return isValid;
+        };
+
+        // Rate calculation
+        const getOdRate = () => {
+            const vType = $('vehicleType').value;
+            const zone = $('zone').value;
+            const age = state.vehicleAge;
+            const cc = parseFloat($('cc').value) || 0;
+            const gvw = parseFloat($('gvw').value) || 0;
+            const engineType = $('engineType').value;
+
+            let rateConfig;
+            let ageKey;
+
+            // Determine age bracket
+            if (age < 5) ageKey = 'lt5';
+            else if (age >= 5 && age < 7) ageKey = 'gte5lt7';
+            else if (age >= 5 && age < 10) ageKey = 'gte5lt10';
+            else if (age >= 7) ageKey = 'gte7';
+            else if (age >= 10) ageKey = 'gte10';
+
+            switch (vType) {
+                case 'GCV4':
+                    return CONFIG.rates.gcv[zone][ageKey];
+                
+                case '3GCV':
+                    return CONFIG.rates.threeGcv[zone][ageKey];
+                
+                case '3PCV':
+                    return CONFIG.rates.threePcv[zone][ageKey];
+                
+                case 'PvtCar':
+                case 'PvtCarS':
+                    if (engineType === 'Electric') {
+                        return CONFIG.rates.pvtCar.electric[zone][ageKey];
+                    } else {
+                        rateConfig = CONFIG.rates.pvtCar.ice[zone][ageKey];
+                        if (cc <= 1000) return rateConfig.lte1000;
+                        if (cc <= 1500) return rateConfig.gt1000lte1500;
+                        return rateConfig.gt1500;
+                    }
+                
+                case '2W':
+                case '2WSS':
+                    if (engineType === 'Electric') {
+                        return CONFIG.rates.twoWheeler.electric[zone][ageKey];
+                    } else {
+                        rateConfig = CONFIG.rates.twoWheeler.ice[zone][ageKey];
+                        if (cc <= 150) return rateConfig.lte150;
+                        if (cc <= 350) return rateConfig.gt150lte350;
+                        return rateConfig.gt350;
+                    }
+                
+                case 'PCV Taxi':
+                    rateConfig = CONFIG.rates.taxi[zone][ageKey];
+                    if (cc <= 1000) return rateConfig.lte1000;
+                    if (cc <= 1500) return rateConfig.gt1000lte1500;
+                    return rateConfig.gt1500;
+                
+                case 'PCV Bus':
+                case 'PCV School Bus':
+                    return CONFIG.rates.pcvBus[zone][ageKey];
+                
+                case 'MISC':
+                    return CONFIG.rates.misc[zone][ageKey];
+                
+                default:
+                    return 0;
+            }
+        };
+
+        const calculateBasicOd = () => {
+            const idv = parseFloat($('newIdv').textContent) || 0;
+            const rate = state.odRate;
+            const vType = $('vehicleType').value;
+            const gvw = parseFloat($('gvw').value) || 0;
+            const passengers = parseFloat($('passengers').value) || 0;
+
+            let basicOd = (idv * rate) / 100;
+
+            // Additional charges for specific vehicles
+            if (vType === 'GCV4' && gvw > 12000) {
+                basicOd += (gvw - 12000) * 0.27;
+            }
+
+            if (vType === 'PCV Bus' || vType === 'PCV School Bus') {
+                if (passengers >= 7 && passengers <= 18) basicOd += 350;
+                else if (passengers >= 19 && passengers <= 36) basicOd += 450;
+                else if (passengers >= 37 && passengers <= 60) basicOd += 550;
+                else if (passengers > 60) basicOd += 680;
+            }
+
+            return basicOd;
+        };
+
+        const calculateTp = () => {
+            const vType = $('vehicleType').value;
+            const cc = parseFloat($('cc').value) || 0;
+            const gvw = parseFloat($('gvw').value) || 0;
+            const passengers = parseFloat($('passengers').value) || 0;
+            const engineType = $('engineType').value;
+            const isNew = state.isNewVehicle;
+
+            let basicTp = 0;
+            let llPassengers = 0;
+
+            switch (vType) {
+                case 'GCV4':
+                    if (gvw <= 7500) basicTp = CONFIG.tp.gcv.lte7500;
+                    else if (gvw <= 12000) basicTp = CONFIG.tp.gcv.gt7500lte12000;
+                    else if (gvw <= 20000) basicTp = CONFIG.tp.gcv.gt12000lte20000;
+                    else if (gvw <= 40000) basicTp = CONFIG.tp.gcv.gt20000lte40000;
+                    else basicTp = CONFIG.tp.gcv.gt40000;
+                    break;
+
+                case '3GCV':
+                    basicTp = engineType === 'Electric' ? CONFIG.tp.threeGcv.electric : CONFIG.tp.threeGcv.ice;
+                    break;
+
+                case '3PCV':
+                    const threePcvConfig = engineType === 'Electric' ? CONFIG.tp.threePcv.electric : CONFIG.tp.threePcv.ice;
+                    basicTp = threePcvConfig.basic;
+                    llPassengers = passengers * threePcvConfig.perPassenger;
+                    break;
+
+                case 'PCV Bus':
+                    basicTp = CONFIG.tp.pcvBus.basic;
+                    llPassengers = passengers * CONFIG.tp.pcvBus.perPassenger;
+                    break;
+
+                case 'PCV School Bus':
+                    basicTp = CONFIG.tp.pcvSchoolBus.basic;
+                    llPassengers = passengers * CONFIG.tp.pcvSchoolBus.perPassenger;
+                    break;
+
+                case 'MISC':
+                    basicTp = CONFIG.tp.misc;
+                    break;
+
+                case 'PCV Taxi':
+                    let taxiConfig;
+                    if (cc <= 1000) taxiConfig = CONFIG.tp.taxi.lte1000;
+                    else if (cc <= 1500) taxiConfig = CONFIG.tp.taxi.gt1000lte1500;
+                    else taxiConfig = CONFIG.tp.taxi.gt1500;
+                    basicTp = taxiConfig.basic;
+                    llPassengers = passengers * taxiConfig.perPassenger;
+                    break;
+
+                case 'PvtCar':
+                case 'PvtCarS':
+                    let carConfig;
+                    if (engineType === 'Electric') {
+                        carConfig = isNew ? CONFIG.tp.pvtCar.electric.new : CONFIG.tp.pvtCar.electric.renewal;
+                        if (cc <= 30) basicTp = carConfig.lte30;
+                        else if (cc <= 65) basicTp = carConfig.gt30lte65;
+                        else basicTp = carConfig.gt65;
+                    } else if (engineType === 'Hybrid') {
+                        carConfig = isNew ? CONFIG.tp.pvtCar.hybrid.new : CONFIG.tp.pvtCar.hybrid.renewal;
+                        if (cc <= 1000) basicTp = carConfig.lte1000;
+                        else if (cc <= 1500) basicTp = carConfig.gt1000lte1500;
+                        else basicTp = carConfig.gt1500;
+                    } else {
+                        carConfig = isNew ? CONFIG.tp.pvtCar.ice.new : CONFIG.tp.pvtCar.ice.renewal;
+                        if (cc <= 1000) basicTp = carConfig.lte1000;
+                        else if (cc <= 1500) basicTp = carConfig.gt1000lte1500;
+                        else basicTp = carConfig.gt1500;
+                    }
+                    break;
+
+                case '2W':
+                case '2WSS':
+                    let twoWConfig;
+                    if (engineType === 'Electric') {
+                        twoWConfig = isNew ? CONFIG.tp.twoWheeler.electric.new : CONFIG.tp.twoWheeler.electric.renewal;
+                        if (cc <= 3) basicTp = twoWConfig.lte3;
+                        else if (cc <= 7) basicTp = twoWConfig.gt3lte7;
+                        else if (cc <= 16) basicTp = twoWConfig.gt7lte16;
+                        else basicTp = twoWConfig.gt16;
+                    } else {
+                        twoWConfig = isNew ? CONFIG.tp.twoWheeler.ice.new : CONFIG.tp.twoWheeler.ice.renewal;
+                        if (cc <= 75) basicTp = twoWConfig.lte75;
+                        else if (cc <= 150) basicTp = twoWConfig.gt75lte150;
+                        else if (cc <= 350) basicTp = twoWConfig.gt150lte350;
+                        else basicTp = twoWConfig.gt350;
+                    }
+                    break;
+            }
+
+            return { basicTp, llPassengers };
+        };
+
+        const calculateAddons = () => {
+            const breakdown = { od: {}, liability: {} };
+            const idv = parseFloat($('newIdv').textContent) || 0;
+            const basicOd = state.basicOd;
+            const discount = parseFloat($('discount').value) || 0;
+            const age = state.vehicleAge;
+            const vType = $('vehicleType').value;
+            const engineType = $('engineType').value;
+            const isNew = state.isNewVehicle;
+            const elecAcc = parseFloat($('electricalAcc').value) || 0;
+
+            // Basic OD
+            breakdown.od['Basic OD'] = basicOd;
+
+            // Discount
+            if (discount > 0) {
+                breakdown.od['Discount'] = -(basicOd * discount / 100);
+            }
+
+            // Electrical Accessories OD
+            let elecAccOd = 0;
+            if (elecAcc > 0) {
+                elecAccOd = elecAcc * CONFIG.addons.electricalAcc * (1 - discount / 100);
+                breakdown.od['Electrical Accessories'] = elecAccOd;
+            }
+
+            // Trailer OD
+            let trailerOd = 0;
+            const trailerAmt = parseFloat($('trailerOd').value) || 0;
+            if (trailerAmt > 0) {
+                trailerOd = trailerAmt * CONFIG.addons.trailerOd * (1 - discount / 100);
+                breakdown.od['Trailer OD'] = trailerOd;
+            }
+
+            // IMT-23
+            if ($('imt23').checked) {
+                const imt23Base = basicOd + (breakdown.od['Discount'] || 0) + elecAccOd + trailerOd;
+                breakdown.od['IMT-23 (Parts Exclusion)'] = imt23Base * 0.15;
+            }
+
+            // Nil Depreciation
+            if ($('nilDep').checked) {
+                const isCommercial = ['GCV4', 'MISC', 'PCV Taxi', 'PCV Bus', 'PCV School Bus', '3GCV', '3PCV'].includes(vType);
+                const nilDepConfig = isCommercial ? CONFIG.addons.nilDep.commercial : CONFIG.addons.nilDep.private;
+                
+                let nilDepRate = 0;
+                if (isCommercial) {
+                    if (age <= 0.5) nilDepRate = nilDepConfig.lte0_5;
+                    else if (age <= 1.5) nilDepRate = nilDepConfig.gt0_5lte1_5;
+                    else if (age <= 2.5) nilDepRate = nilDepConfig.gt1_5lte2_5;
+                    else if (age <= 4.5) nilDepRate = nilDepConfig.gt2_5lte4_5;
+                } else {
+                    if (age <= 0.5) nilDepRate = nilDepConfig.lte0_5;
+                    else if (age <= 1.5) nilDepRate = nilDepConfig.gt0_5lte1_5;
+                    else if (age <= 4.5) nilDepRate = nilDepConfig.gt1_5lte4_5;
+                    else if (age <= 6.5) nilDepRate = nilDepConfig.gt4_5lte6_5;
+                }
+                
+                breakdown.od['Nil Depreciation'] = (basicOd + elecAccOd) * nilDepRate;
+            }
+
+            // Engine Protect
+            if ($('engineProtect').checked) {
+                let epConfig, epRate = 0;
+                if (vType === 'PvtCar' || vType === 'PvtCarS') {
+                    epConfig = CONFIG.addons.engineProtect.pvtCar;
+                } else if (vType === '2W' || vType === '2WSS') {
+                    epConfig = CONFIG.addons.engineProtect.twoWheeler;
+                } else {
+                    epConfig = CONFIG.addons.engineProtect.commercial;
+                }
+
+                if (age < 0.5) epRate = epConfig.lt0_5;
+                else if (age < 1.5) epRate = epConfig.gte0_5lt1_5;
+                else if (age < 2.5) epRate = epConfig.gte1_5lt2_5 || 0;
+                else if (age < 3.5) epRate = epConfig.gte2_5lt3_5 || 0;
+                else if (age < 4.5) epRate = epConfig.gte3_5lt4_5 || 0;
+
+                breakdown.od['Engine Protect'] = idv * epRate;
+            }
+
+            // Consumables
+            if ($('consumables').checked) {
+                const isPrivate = ['PvtCar', 'PvtCarS', '2W', '2WSS'].includes(vType);
+                const consConfig = isPrivate ? CONFIG.addons.consumables.private : CONFIG.addons.consumables.commercial;
+                
+                let consRate = 0;
+                if (age < 0.5) consRate = consConfig.lt0_5;
+                else if (age < 1.5) consRate = consConfig.gte0_5lt1_5;
+                else if (age < 2.5) consRate = consConfig.gte1_5lt2_5;
+                else if (age < 3.5) consRate = consConfig.gte2_5lt3_5;
+                else if (age < 4.5) consRate = consConfig.gte3_5lt4_5;
+
+                breakdown.od['Consumables'] = idv * consRate;
+            }
+
+            // Return to Invoice
+            if ($('rti').checked) {
+                let rtiConfig, rtiRate = 0;
+                if (['PvtCar', 'PvtCarS', '2W', '2WSS', 'GCV4', 'PCV Taxi'].includes(vType)) {
+                    rtiConfig = CONFIG.addons.rti.pvtCarTwoWheelerGcvTaxi;
+                } else if (vType === 'MISC') {
+                    rtiConfig = CONFIG.addons.rti.misc;
+                } else {
+                    rtiConfig = CONFIG.addons.rti.bus;
+                }
+
+                if (age < 0.5) rtiRate = rtiConfig.lt0_5;
+                else if (age < 1.5) rtiRate = rtiConfig.gte0_5lt1_5;
+                else if (age < 2.5) rtiRate = rtiConfig.gte1_5lt2_5;
+
+                breakdown.od['Return to Invoice'] = idv * rtiRate;
+            }
+
+            // Loss of Key
+            if ($('lossOfKey').checked) {
+                breakdown.od['Loss of Key'] = (vType === '2W' || vType === '2WSS') ? 
+                    CONFIG.addons.lossOfKey.twoWheeler : CONFIG.addons.lossOfKey.others;
+            }
+
+            // EMI Protect
+            const emiAmt = parseFloat($('emiProtect').value) || 0;
+            if (emiAmt > 0) {
+                let emiRate = CONFIG.addons.emiProtect.others;
+                if (vType === '2W' || vType === '2WSS') emiRate = CONFIG.addons.emiProtect.twoWheeler;
+                else if (vType === 'PvtCar' || vType === 'PvtCarS' || vType === 'PCV Taxi') emiRate = CONFIG.addons.emiProtect.pvtCarTaxi;
+                breakdown.od['EMI Protect'] = emiAmt * emiRate;
+            }
+
+            // Road Side Assist
+            if ($('rsa').checked) {
+                if (vType === '2W' || vType === '2WSS') breakdown.od['Road Side Assist'] = CONFIG.addons.rsa.twoWheeler;
+                else if (vType === 'PvtCar' || vType === 'PvtCarS') breakdown.od['Road Side Assist'] = CONFIG.addons.rsa.pvtCar;
+                else if (vType === 'PCV Taxi') breakdown.od['Road Side Assist'] = CONFIG.addons.rsa.taxi;
+                else if (vType === 'GCV4') breakdown.od['Road Side Assist'] = CONFIG.addons.rsa.gcv;
+            }
+
+            // Tyre & Rim
+            const tyreVal = parseFloat($('tyreRim').value) || 0;
+            if (tyreVal > 0) {
+                breakdown.od['Tyre & Rim Protect'] = CONFIG.addons.tyreRim[tyreVal];
+            }
+
+            // NCB Protect
+            if ($('ncbProtect').checked) {
+                const ncbRate = (vType === 'PvtCar' || vType === 'PvtCarS') ? 
+                    CONFIG.addons.ncbProtect.pvtCar : CONFIG.addons.ncbProtect.others;
+                breakdown.od['NCB Protect'] = idv * ncbRate;
+            }
+
+            // Geo Extension OD
+            if ($('geoExtension').checked) {
+                breakdown.od['Geographical Extension OD'] = CONFIG.addons.geoExtension;
+            }
+
+            // LPG/CNG OD
+            if ($('lpgCng').checked) {
+                const lpgBase = basicOd + (breakdown.od['Discount'] || 0);
+                breakdown.od['LPG/CNG Kit OD'] = lpgBase * CONFIG.addons.lpgCngOd;
+            }
+
+            // Overturning
+            if ($('overturning').checked) {
+                breakdown.od['Overturning'] = idv * CONFIG.addons.overturning;
+            }
+
+            // Additional Towing
+            const towingAmt = parseFloat($('addTowing').value) || 0;
+            if (towingAmt > 0) {
+                const towingRate = towingAmt <= 10000 ? CONFIG.addons.towing.lte10000 : CONFIG.addons.towing.gt10000;
+                breakdown.od['Additional Towing'] = towingAmt * towingRate;
+            }
+
+            // EV Protect
+            if ($('evProtect').checked && (engineType === 'Electric' || engineType === 'Hybrid')) {
+                const evConfig = engineType === 'Electric' ? CONFIG.addons.evProtect.electric : CONFIG.addons.evProtect.hybrid;
+                let evRate = 0;
+                if (age < 0.5) evRate = evConfig.lt0_5;
+                else if (age < 1.5) evRate = evConfig.gte0_5lt1_5;
+                else if (age < 2.5) evRate = evConfig.gte1_5lt2_5;
+                else if (age < 3.5) evRate = evConfig.gte2_5lt3_5;
+                else evRate = evConfig.gte3_5;
+                breakdown.od['EV Protect'] = idv * evRate;
+            }
+
+            // NCB
+            const ncb = parseFloat($('ncb').value) || 0;
+            if (ncb > 0) {
+                let ncbBase = basicOd + (breakdown.od['Discount'] || 0) + (breakdown.od['IMT-23 (Parts Exclusion)'] || 0) + 
+                              (breakdown.od['Nil Depreciation'] || 0) + (breakdown.od['LPG/CNG Kit OD'] || 0) + 
+                              (breakdown.od['Overturning'] || 0) + elecAccOd + trailerOd;
+                breakdown.od['NCB'] = -(ncbBase * ncb / 100);
+            }
+
+            // Liability calculations
+            const { basicTp, llPassengers } = calculateTp();
+            
+            breakdown.liability['Basic Liability'] = basicTp;
+            
+            if (llPassengers > 0) {
+                breakdown.liability['LL to Passengers'] = llPassengers;
+            }
+
+            // LL to Paid Driver
+            const llDrivers = parseFloat($('llDrivers').value) || 0;
+            if (llDrivers > 0) {
+                let llRate = 50;
+                if (vType === 'PvtCar' || vType === 'PvtCarS') {
+                    llRate = isNew ? CONFIG.addons.llDriver.pvtCarNew : CONFIG.addons.llDriver.pvtCarRenewal;
+                } else if (vType === '2W' || vType === '2WSS') {
+                    llRate = isNew ? CONFIG.addons.llDriver.twoWheelerNew : CONFIG.addons.llDriver.twoWheelerRenewal;
+                }
+                breakdown.liability['LL to Paid Driver/Cleaner/Conductor'] = llDrivers * llRate;
+            }
+
+            // PA Owner Driver
+            if ($('paOwnerDriver').checked) {
+                const tenure = parseFloat($('paTenure').value) || 1;
+                breakdown.liability['PA Owner-Driver'] = CONFIG.addons.paTenure[tenure];
+            }
+
+            // PA to Paid Driver
+            const paidDriverCount = parseFloat($('paidDriverCount').value) || 0;
+            const paidDriverSI = parseFloat($('paidDriverSI').value) || 0;
+            if (paidDriverCount > 0 && paidDriverSI > 0) {
+                const paidDriverRate = CONFIG.addons.paPaidDriver[paidDriverSI];
+                const multiplier = isNew ? (vType === 'PvtCar' || vType === 'PvtCarS' ? 3 : vType === '2W' || vType === '2WSS' ? 5 : 1) : 1;
+                breakdown.liability['PA to Paid Driver/Cleaner/Conductor'] = paidDriverCount * paidDriverRate * multiplier;
+            }
+
+            // PA to Unnamed Passengers
+            const passengerCount = parseFloat($('passengerCount').value) || 0;
+            const passengerSI = parseFloat($('passengerSI').value) || 0;
+            if (passengerCount > 0 && passengerSI > 0) {
+                const passengerRate = CONFIG.addons.paPassenger[passengerSI];
+                const multiplier = isNew ? (vType === 'PvtCar' || vType === 'PvtCarS' ? 3 : vType === '2W' || vType === '2WSS' ? 5 : 1) : 1;
+                breakdown.liability['PA to Unnamed Passengers'] = passengerCount * passengerRate * multiplier;
+            }
+
+            // Geo Extension TP
+            if ($('geoExtension').checked) {
+                const multiplier = isNew ? (vType === 'PvtCar' || vType === 'PvtCarS' ? 3 : vType === '2W' || vType === '2WSS' ? 5 : 1) : 1;
+                breakdown.liability['Geographical Extension TP'] = CONFIG.tp.geoExtension * multiplier;
+            }
+
+            // LPG/CNG TP
+            if ($('lpgCng').checked) {
+                const multiplier = isNew ? (vType === 'PvtCar' || vType === 'PvtCarS' ? 3 : vType === '2W' || vType === '2WSS' ? 5 : 1) : 1;
+                breakdown.liability['LPG/CNG Kit TP'] = CONFIG.tp.lpgCng * multiplier;
+            }
+
+            // Trailer TP
+            if (trailerAmt > 0) {
+                breakdown.liability['Trailer TP'] = CONFIG.tp.trailer;
+            }
+
+            return breakdown;
+        };
+
+        const displayPremium = () => {
+            const breakdown = calculateAddons();
+            state.odBreakdown = breakdown.od;
+            state.liabilityBreakdown = breakdown.liability;
+
+            // Calculate totals
+            const totalOd = Object.values(breakdown.od).reduce((sum, val) => sum + val, 0);
+            const totalTp = Object.values(breakdown.liability).reduce((sum, val) => sum + val, 0);
+
+            // GST calculation
+            const gstOd = totalOd * CONFIG.gst.od;
+            let gstTp;
+            
+            if ($('vehicleType').value === 'GCV4' || $('vehicleType').value === '3GCV') {
+                const basicTpOnly = breakdown.liability['Basic Liability'] || 0;
+                const otherTp = totalTp - basicTpOnly;
+                gstTp = (basicTpOnly * CONFIG.gst.tpBasic) + (otherTp * CONFIG.gst.tp);
+            } else {
+                gstTp = totalTp * CONFIG.gst.tp;
+            }
+
+            const grandTotal = totalOd + gstOd + totalTp + gstTp + 1;
+
+            // Display OD breakdown
+            const odHtml = Object.entries(breakdown.od).map(([key, value]) => 
+                `<div class="premium-item">
+                    <span>${key}</span>
+                    <span>${value >= 0 ? '' : '-'}Rs. ${formatCurrency(Math.abs(value))}</span>
+                </div>`
+            ).join('') + 
+            `<div class="premium-item total">
+                <span>Total OD</span>
+                <span>Rs. ${formatCurrency(totalOd)}</span>
+            </div>
+            <div class="premium-item">
+                <span>GST (18%)</span>
+                <span>Rs. ${formatCurrency(gstOd)}</span>
+            </div>`;
+
+            // Display Liability breakdown
+            const liabilityHtml = Object.entries(breakdown.liability).map(([key, value]) => 
+                `<div class="premium-item">
+                    <span>${key}</span>
+                    <span>Rs. ${formatCurrency(value)}</span>
+                </div>`
+            ).join('') + 
+            `<div class="premium-item total">
+                <span>Total Liability</span>
+                <span>Rs. ${formatCurrency(totalTp)}</span>
+            </div>
+            <div class="premium-item">
+                <span>GST</span>
+                <span>Rs. ${formatCurrency(gstTp)}</span>
+            </div>`;
+
+            $('odBreakdown').innerHTML = odHtml;
+            $('liabilityBreakdown').innerHTML = liabilityHtml;
+            $('totalAmount').textContent = formatCurrency(grandTotal);
+
+            // Show summary and enable export
+            $('premiumSummary').classList.remove('hidden');
+            $('exportPdfBtn').disabled = false;
+            $('exportProposalBtn').disabled = false;
+
+            // Scroll to summary
+            $('premiumSummary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            state.totalOd = totalOd;
+            state.totalTp = totalTp;
+        };
+
+        // PDF Export Functions
+        const exportPdf = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.text('Motor Insurance Premium', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('Premium Calculation Summary', 105, 25, { align: 'center' });
+
+            doc.setTextColor(0, 0, 0);
+            let yPos = 45;
+
+            // Basic Details
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Policy Details', 14, yPos);
+            yPos += 8;
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const basicDetails = [
+                ['Proposer Name', $('proposerName').value],
+                ['Registration No.', $('registrationNo').value],
+                ['Registration Date', $('registrationDate').value],
+                ['Risk Start Date', $('riskStartDate').value],
+                ['Zone', $('zone').options[$('zone').selectedIndex].text],
+                ['Vehicle Type', $('vehicleType').options[$('vehicleType').selectedIndex].text],
+                ['IDV', 'Rs. ' + $('newIdv').textContent]
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Field', 'Value']],
+                body: basicDetails,
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235] },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // OD Premium Breakdown
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Own Damage Premium', 14, yPos);
+            yPos += 8;
+
+            const odData = Object.entries(state.odBreakdown).map(([key, value]) => [
+                key,
+                (value >= 0 ? '' : '-') + 'Rs. ' + formatCurrency(Math.abs(value))
+            ]);
+
+            const totalOd = Object.values(state.odBreakdown).reduce((sum, val) => sum + val, 0);
+            const gstOd = totalOd * CONFIG.gst.od;
+            odData.push(['Total OD', 'Rs. ' + formatCurrency(totalOd)]);
+            odData.push(['GST (18%)', 'Rs. ' + formatCurrency(gstOd)]);
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Description', 'Amount']],
+                body: odData,
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235] },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Check if new page needed
+            if (yPos > 240) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            // Liability Premium Breakdown
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Liability Premium', 14, yPos);
+            yPos += 8;
+
+            const liabilityData = Object.entries(state.liabilityBreakdown).map(([key, value]) => [
+                key,
+                'Rs. ' + formatCurrency(value)
+            ]);
+
+            const totalTp = Object.values(state.liabilityBreakdown).reduce((sum, val) => sum + val, 0);
+            const vType = $('vehicleType').value;
+            let gstTp;
+            
+            if (vType === 'GCV4' || vType === '3GCV') {
+                const basicTpOnly = state.liabilityBreakdown['Basic Liability'] || 0;
+                const otherTp = totalTp - basicTpOnly;
+                gstTp = (basicTpOnly * CONFIG.gst.tpBasic) + (otherTp * CONFIG.gst.tp);
+            } else {
+                gstTp = totalTp * CONFIG.gst.tp;
+            }
+
+            liabilityData.push(['Total Liability', 'Rs. ' + formatCurrency(totalTp)]);
+            liabilityData.push(['GST', 'Rs. ' + formatCurrency(gstTp)]);
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Description', 'Amount']],
+                body: liabilityData,
+                theme: 'striped',
+                headStyles: { fillColor: [37, 99, 235] },
+                margin: { left: 14, right: 14 }
+            });
+
+            // Total Payable
+            const grandTotal = totalOd + gstOd + totalTp + gstTp + 1;
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            doc.setFillColor(16, 185, 129);
+            doc.rect(14, yPos, 182, 20, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Total Premium Payable', 105, yPos + 8, { align: 'center' });
+            doc.setFontSize(18);
+            doc.text('Rs. ' + formatCurrency(grandTotal) + '/-', 105, yPos + 16, { align: 'center' });
+
+            // Additional Message
+            const addMsg = $('additionalMessage').value;
+            if (addMsg) {
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                yPos += 25;
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text('Additional Information:', 14, yPos);
+                yPos += 5;
+                const splitMsg = doc.splitTextToSize(addMsg, 180);
+                doc.text(splitMsg, 14, yPos);
+            }
+
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Generated on ' + new Date().toLocaleString(), 14, 287);
+                doc.text('Page ' + i + ' of ' + pageCount, 196, 287, { align: 'right' });
+            }
+
+            doc.save($('proposerName').value + '_' + $('registrationNo').value + '_Quote.pdf');
+        };
+
+        const exportProposal = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFillColor(37, 99, 235);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text('Motor Insurance', 105, 15, { align: 'center' });
+            doc.setFontSize(16);
+            doc.text('Proposal Form', 105, 25, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('Please verify all details before submission', 105, 33, { align: 'center' });
+
+            doc.setTextColor(0, 0, 0);
+            let yPos = 50;
+
+            // Section 1: Proposer Details
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('1. Proposer Details', 14, yPos);
+            yPos += 8;
+
+            const proposerData = [
+                ['Full Name', $('proposerName').value],
+                ['Registration Number', $('registrationNo').value]
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                body: proposerData,
+                theme: 'plain',
+                styles: { fontSize: 10 },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Section 2: Vehicle Details
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('2. Vehicle Details', 14, yPos);
+            yPos += 8;
+
+            const vehicleData = [
+                ['Vehicle Type', $('vehicleType').options[$('vehicleType').selectedIndex].text],
+                ['Engine Type', $('engineType').options[$('engineType').selectedIndex].text],
+                ['Registration Date', $('registrationDate').value],
+                ['Zone', $('zone').options[$('zone').selectedIndex].text]
+            ];
+
+            if ($('cc').value) vehicleData.push(['CC/KW', $('cc').value]);
+            if ($('gvw').value) vehicleData.push(['GVW (kg)', $('gvw').value]);
+            if ($('passengers').value) vehicleData.push(['Passengers', $('passengers').value]);
+
+            doc.autoTable({
+                startY: yPos,
+                body: vehicleData,
+                theme: 'plain',
+                styles: { fontSize: 10 },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Section 3: Insurance Coverage
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('3. Insurance Coverage', 14, yPos);
+            yPos += 8;
+
+            const coverageData = [
+                ['Risk Start Date', $('riskStartDate').value],
+                ['IDV', 'Rs. ' + $('newIdv').textContent],
+                ['OD Discount', $('discount').value + '%'],
+                ['NCB', $('ncb').value + '%']
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                body: coverageData,
+                theme: 'plain',
+                styles: { fontSize: 10 },
+                columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Section 4: Add-ons Selected
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('4. Add-on Covers', 14, yPos);
+            yPos += 8;
+
+            const addonsSelected = [];
+            if ($('nilDep').checked) addonsSelected.push('Nil Depreciation');
+            if ($('engineProtect').checked) addonsSelected.push('Engine Protect');
+            if ($('consumables').checked) addonsSelected.push('Consumables');
+            if ($('rti').checked) addonsSelected.push('Return to Invoice');
+            if ($('lossOfKey').checked) addonsSelected.push('Loss of Key');
+            if ($('ncbProtect').checked) addonsSelected.push('NCB Protect');
+            if ($('rsa').checked) addonsSelected.push('Road Side Assist');
+            if ($('lpgCng').checked) addonsSelected.push('LPG/CNG Kit');
+            if ($('geoExtension').checked) addonsSelected.push('Geographical Extension');
+            if ($('evProtect').checked) addonsSelected.push('EV Protect');
+            if ($('imt23').checked) addonsSelected.push('IMT-23');
+            if ($('paOwnerDriver').checked) addonsSelected.push('PA Owner-Driver');
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            if (addonsSelected.length > 0) {
+                doc.text(addonsSelected.join(', '), 14, yPos, { maxWidth: 180 });
+                yPos += (Math.ceil(addonsSelected.length / 3) * 5) + 5;
+            } else {
+                doc.text('No add-ons selected', 14, yPos);
+                yPos += 10;
+            }
+
+            // Section 5: Premium Summary
+            if (yPos > 240) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('5. Premium Summary', 14, yPos);
+            yPos += 8;
+
+            const totalOd = Object.values(state.odBreakdown).reduce((sum, val) => sum + val, 0);
+            const totalTp = Object.values(state.liabilityBreakdown).reduce((sum, val) => sum + val, 0);
+            const gstOd = totalOd * CONFIG.gst.od;
+            
+            let gstTp;
+            const vType = $('vehicleType').value;
+            if (vType === 'GCV4' || vType === '3GCV') {
+                const basicTpOnly = state.liabilityBreakdown['Basic Liability'] || 0;
+                const otherTp = totalTp - basicTpOnly;
+                gstTp = (basicTpOnly * CONFIG.gst.tpBasic) + (otherTp * CONFIG.gst.tp);
+            } else {
+                gstTp = totalTp * CONFIG.gst.tp;
+            }
+
+            const grandTotal = totalOd + gstOd + totalTp + gstTp + 1;
+
+            const summaryData = [
+                ['Own Damage Premium', 'Rs. ' + formatCurrency(totalOd)],
+                ['GST on OD', 'Rs. ' + formatCurrency(gstOd)],
+                ['Liability Premium', 'Rs. ' + formatCurrency(totalTp)],
+                ['GST on Liability', 'Rs. ' + formatCurrency(gstTp)],
+                ['Total Premium', 'Rs. ' + formatCurrency(grandTotal) + '/-']
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                body: summaryData,
+                theme: 'striped',
+                styles: { fontSize: 10 },
+                columnStyles: { 
+                    0: { fontStyle: 'bold', cellWidth: 80 },
+                    1: { halign: 'right' }
+                },
+                headStyles: { fillColor: [37, 99, 235] },
+                margin: { left: 14, right: 14 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Additional Information
+            const addMsg = $('additionalMessage').value;
+            if (addMsg) {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('6. Additional Information', 14, yPos);
+                yPos += 8;
+
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                const splitMsg = doc.splitTextToSize(addMsg, 180);
+                doc.text(splitMsg, 14, yPos);
+                yPos += (splitMsg.length * 5) + 10;
+            }
+
+            // Declaration
+            if (yPos > 230) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Declaration', 14, yPos);
+            yPos += 8;
+
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            const declaration = 'I hereby declare that the above information is true and correct to the best of my knowledge. I understand that any misrepresentation or concealment of material facts may void the insurance policy.';
+            const splitDeclaration = doc.splitTextToSize(declaration, 180);
+            doc.text(splitDeclaration, 14, yPos);
+            yPos += (splitDeclaration.length * 4) + 15;
+
+            doc.text('Date: _______________', 14, yPos);
+            doc.text('Signature: _______________', 120, yPos);
+
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Generated on ' + new Date().toLocaleString(), 14, 287);
+                doc.text('Page ' + i + ' of ' + pageCount, 196, 287, { align: 'right' });
+                doc.text('This is a computer-generated proposal form', 105, 287, { align: 'center' });
+            }
+
+            doc.save($('proposerName').value + '_' + $('registrationNo').value + '_Proposal.pdf');
+        };
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set max date for registration
+            const today = new Date().toISOString().split('T')[0];
+            $('registrationDate').setAttribute('max', today);
+
+            // Calculate IDV
+            $('oldIdv').addEventListener('input', () => {
+                const oldIdv = parseFloat($('oldIdv').value) || 0;
+                const dep = parseFloat($('depreciation').value) || 0;
+                const newIdv = oldIdv * (100 - dep) / 100;
+                $('newIdv').textContent = formatCurrency(newIdv);
+                clearError('oldIdv');
+            });
+
+            $('depreciation').addEventListener('input', () => {
+                const oldIdv = parseFloat($('oldIdv').value) || 0;
+                const dep = parseFloat($('depreciation').value) || 0;
+                const newIdv = oldIdv * (100 - dep) / 100;
+                $('newIdv').textContent = formatCurrency(newIdv);
+            });
+
+            // Handle vehicle age calculation
+            const updateVehicleAge = () => {
+                const regDate = $('registrationDate').value;
+                const riskDate = $('riskStartDate').value;
+                
+                if (regDate && riskDate) {
+                    state.vehicleAge = calculateAge(regDate, riskDate);
+                    state.isNewVehicle = new Date(regDate).setHours(0,0,0,0) === new Date(riskDate).setHours(0,0,0,0);
+                    
+                    // Update OD rate
+                    state.odRate = getOdRate();
+                    if (state.odRate > 0) {
+                        $('odRate').textContent = state.odRate;
+                        $('odRateDisplay').classList.remove('hidden');
+                    }
+                    
+                    // Update add-on availability
+                    updateAddonAvailability();
+                    clearError('registrationDate');
+                    clearError('riskStartDate');
+                }
+            };
+
+            $('registrationDate').addEventListener('change', () => {
+                updateVehicleAge();
+                $('premiumSummary').classList.add('hidden');
+            });
+
+            $('riskStartDate').addEventListener('change', () => {
+                updateVehicleAge();
+                $('premiumSummary').classList.add('hidden');
+            });
+
+            $('zone').addEventListener('change', () => {
+                updateVehicleAge();
+                $('premiumSummary').classList.add('hidden');
+            });
+
+            // Vehicle type change
+            $('vehicleType').addEventListener('change', () => {
+                const vType = $('vehicleType').value;
+                
+                // Reset fields
+                $('cc').value = '';
+                $('gvw').value = '';
+                $('passengers').value = '';
+                $('llDrivers').value = '';
+                $('engineType').selectedIndex = 0;
+                
+                // Enable/disable fields based on vehicle type
+                if (vType === 'GCV4') {
+                    $('gvw').disabled = false;
+                    $('cc').disabled = true;
+                    $('passengers').disabled = true;
+                    $('engineType').disabled = true;
+                } else if (vType === '3GCV' || vType === '3PCV') {
+                    $('gvw').disabled = true;
+                    $('cc').disabled = true;
+                    $('passengers').disabled = vType === '3GCV';
+                    $('engineType').disabled = false;
+                    $('engineType').options[2].disabled = true; // Disable Hybrid
+                } else if (vType === 'PvtCar' || vType === 'PvtCarS') {
+                    $('gvw').disabled = true;
+                    $('passengers').disabled = true;
+                    $('cc').disabled = false;
+                    $('engineType').disabled = false;
+                    $('engineType').options[2].disabled = false;
+                    $('passengerCount').disabled = false;
+                    $('passengerSI').disabled = false;
+                } else if (vType === '2W' || vType === '2WSS') {
+                    $('gvw').disabled = true;
+                    $('passengers').disabled = true;
+                    $('cc').disabled = false;
+                    $('engineType').disabled = false;
+                    $('engineType').options[2].disabled = true;
+                    $('passengerCount').disabled = false;
+                    $('passengerSI').disabled = false;
+                } else if (vType === 'PCV Taxi' || vType === '3PCV') {
+                    $('gvw').disabled = true;
+                    $('cc').disabled = false;
+                    $('passengers').disabled = false;
+                    $('engineType').disabled = true;
+                } else if (vType === 'PCV Bus' || vType === 'PCV School Bus') {
+                    $('gvw').disabled = true;
+                    $('cc').disabled = true;
+                    $('passengers').disabled = false;
+                    $('engineType').disabled = true;
+                } else if (vType === 'MISC') {
+                    $('gvw').disabled = true;
+                    $('cc').disabled = true;
+                    $('passengers').disabled = true;
+                    $('engineType').disabled = true;
+                }
+
+                // Reset standalone vehicle settings
+                if (vType === 'PvtCarS' || vType === '2WSS') {
+                    $('llDrivers').disabled = true;
+                    $('paOwnerDriver').disabled = true;
+                    $('paOwnerDriver').checked = false;
+                    $('paTenure').disabled = true;
+                }
+
+                updateVehicleAge();
+                $('premiumSummary').classList.add('hidden');
+            });
+
+            // CC/GVW/Passengers change
+            ['cc', 'gvw', 'passengers'].forEach(id => {
+                $(id).addEventListener('input', () => {
+                    updateVehicleAge();
+                    $('premiumSummary').classList.add('hidden');
+                });
+            });
+
+            // Engine type change
+            $('engineType').addEventListener('change', () => {
+                updateVehicleAge();
+                updateAddonAvailability();
+                $('premiumSummary').classList.add('hidden');
+            });
+
+            // PA Owner Driver
+            $('paOwnerDriver').addEventListener('change', () => {
+                $('paTenure').disabled = !$('paOwnerDriver').checked;
+                if (!$('paOwnerDriver').checked) {
+                    $('paTenure').selectedIndex = 0;
+                }
+            });
+
+            // Update addon availability based on age
+            const updateAddonAvailability = () => {
+                const age = state.vehicleAge;
+                const vType = $('vehicleType').value;
+                const engineType = $('engineType').value;
+
+                // Reset all addons
+                ['nilDep', 'engineProtect', 'consumables', 'rti', 'lossOfKey', 'ncbProtect', 'rsa', 'tyreRim', 'overturning', 'evProtect'].forEach(id => {
+                    $(id).disabled = true;
+                    $(id).checked = false;
+                });
+
+                if (!vType || age === 0) return;
+
+                // Commercial vehicles
+                if (['GCV4', '3GCV'].includes(vType)) {
+                    if (age >= 2.5 && age <= 4.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rsa').disabled = false;
+                    } else if (age < 2.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rsa').disabled = false;
+                        $('rti').disabled = false;
+                    } else {
+                        $('rsa').disabled = false;
+                    }
+                }
+
+                // Private Car
+                if (['PvtCar', 'PvtCarS'].includes(vType)) {
+                    if (age < 2.5) {
+                        $('nilDep').disabled = false;
+                        $('engineProtect').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rti').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                        $('tyreRim').disabled = false;
+                        if (engineType === 'Electric' || engineType === 'Hybrid') {
+                            $('evProtect').disabled = false;
+                        }
+                    } else if (age >= 2.5 && age < 4.5) {
+                        $('nilDep').disabled = false;
+                        $('engineProtect').disabled = false;
+                        $('consumables').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                        $('tyreRim').disabled = false;
+                        if (engineType === 'Electric' || engineType === 'Hybrid') {
+                            $('evProtect').disabled = false;
+                        }
+                    } else if (age >= 4.5 && age <= 6.5) {
+                        $('nilDep').disabled = false;
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                    } else {
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                    }
+                }
+
+                // Two Wheeler
+                if (['2W', '2WSS'].includes(vType)) {
+                    if (age < 2.5) {
+                        $('nilDep').disabled = false;
+                        $('engineProtect').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rti').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('rsa').disabled = false;
+                        $('tyreRim').disabled = false;
+                    } else if (age >= 2.5 && age < 4.5) {
+                        $('nilDep').disabled = false;
+                        $('engineProtect').disabled = false;
+                        $('consumables').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('rsa').disabled = false;
+                    } else if (age >= 4.5 && age <= 6.5) {
+                        $('nilDep').disabled = false;
+                        $('rsa').disabled = false;
+                    } else {
+                        $('rsa').disabled = false;
+                    }
+                }
+
+                // Taxi
+                if (vType === 'PCV Taxi') {
+                    if (age < 2.5) {
+                        $('nilDep').disabled = false;
+                        $('engineProtect').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rti').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                    } else if (age >= 2.5 && age <= 4.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                        $('lossOfKey').disabled = false;
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                    } else {
+                        $('ncbProtect').disabled = false;
+                        $('rsa').disabled = false;
+                    }
+                }
+
+                // Bus
+                if (['PCV Bus', 'PCV School Bus'].includes(vType)) {
+                    const passengers = parseFloat($('passengers').value) || 0;
+                    if (age < 2.5) {
+                        if (passengers <= 17) {
+                            $('nilDep').disabled = false;
+                            $('engineProtect').disabled = false;
+                            $('consumables').disabled = false;
+                            $('rti').disabled = false;
+                            $('lossOfKey').disabled = false;
+                        } else {
+                            $('nilDep').disabled = false;
+                            $('consumables').disabled = false;
+                            $('rti').disabled = false;
+                        }
+                        $('rsa').disabled = false;
+                    } else if (age >= 2.5 && age <= 4.5) {
+                        if (passengers <= 17) {
+                            $('nilDep').disabled = false;
+                            $('engineProtect').disabled = false;
+                            $('consumables').disabled = false;
+                            $('lossOfKey').disabled = false;
+                        } else {
+                            $('nilDep').disabled = false;
+                            $('consumables').disabled = false;
+                        }
+                        $('rsa').disabled = false;
+                    } else {
+                        $('rsa').disabled = false;
+                    }
+                }
+
+                // MISC
+                if (vType === 'MISC') {
+                    if (age < 4.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                    }
+                    $('overturning').disabled = false;
+                }
+
+                // 3PCV
+                if (vType === '3PCV') {
+                    if (age < 2.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                        $('rti').disabled = false;
+                    } else if (age >= 2.5 && age <= 4.5) {
+                        $('nilDep').disabled = false;
+                        $('consumables').disabled = false;
+                    }
+                    $('rsa').disabled = false;
+                }
+            };
+
+            // NCB validation for Nil Dep
+            $('nilDep').addEventListener('change', () => {
+                if ($('nilDep').checked) {
+                    const age = state.vehicleAge;
+                    const vType = $('vehicleType').value;
+                    const ncb = parseFloat($('ncb').value) || 0;
+                    const isCommercial = ['GCV4', 'MISC', 'PCV Taxi', 'PCV Bus', 'PCV School Bus', '3GCV', '3PCV'].includes(vType);
+                    
+                    if (isCommercial && age > 2.6 && ncb < 20) {
+                        alert('Nil Depreciation is only applicable for commercial vehicles with age > 2.6 years if NCB is minimum 20% for renewal & 25% for rollover');
+                        if (ncb === 0) {
+                            $('nilDep').checked = false;
+                        }
+                    }
+                    
+                    if (!isCommercial && age > 4.6 && ncb < 20) {
+                        alert('Nil Depreciation is only applicable for private vehicles with age > 4.6 years if NCB is minimum 20% for renewal & 25% for rollover');
+                        if (ncb === 0) {
+                            $('nilDep').checked = false;
+                        }
+                    }
+
+                    // Auto-check IMT-23 for commercial with Nil Dep
+                    if (isCommercial && ['GCV4', 'PCV Bus', 'PCV School Bus', 'MISC'].includes(vType)) {
+                        $('imt23').checked = true;
+                        $('imt23').disabled = true;
+                    }
+                } else {
+                    // Uncheck IMT-23 when Nil Dep is unchecked for commercial
+                    const vType = $('vehicleType').value;
+                    if (['GCV4', 'PCV Bus', 'PCV School Bus', 'MISC'].includes(vType)) {
+                        $('imt23').disabled = false;
+                    }
+                }
+            });
+
+            // Calculate button
+            $('calculateBtn').addEventListener('click', () => {
+                if (!validateForm()) {
+                    alert('Please fill all required fields correctly');
+                    return;
+                }
+
+                state.basicOd = calculateBasicOd();
+                displayPremium();
+            });
+
+            // Export buttons
+            $('exportPdfBtn').addEventListener('click', exportPdf);
+            $('exportProposalBtn').addEventListener('click', exportProposal);
+
+            // Reset premium on any input change
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!['proposerName', 'registrationNo', 'additionalMessage'].includes(el.id)) {
+                    el.addEventListener('change', () => {
+                        $('premiumSummary').classList.add('hidden');
+                        $('exportPdfBtn').disabled = true;
+                        $('exportProposalBtn').disabled = true;
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
